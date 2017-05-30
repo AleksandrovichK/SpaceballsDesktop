@@ -12,25 +12,106 @@ import java.util.Vector;
 
 class MainFrame extends JFrame{
 
+private int borderHeight=800;
+private int borderWidth=800;
+
 private Vector <Circle> circles;
 private double speed = 4;
-private boolean isRun1 = true;
-private boolean isRun2 = true;
-private Thread thread;
-private Thread spiraleThread;
+private boolean isRun = true;
 
-private Runnable runnable = new Runnable() {
-    @Override
-    public void run() {
-                    while (true)
-                        if (isRun1){
-                            for (Circle circle : circles) circle.toMove();
+MainFrame() throws InterruptedException, IOException {
+     settings();
+     toFillVector();
 
-                            repaint();
-                            try {Thread.sleep((long) 12);} catch (InterruptedException e) {e.printStackTrace();}
-                               }
+     repaint();
     }
+
+private void settings() throws IOException {
+    this.setLayout(null);
+
+    this.setBounds(10 * Toolkit.getDefaultToolkit().getScreenSize().width / 100, 5 * Toolkit.getDefaultToolkit().getScreenSize().height / 100, borderWidth, borderHeight);
+    setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+    this.setContentPane(new JLabel(new ImageIcon(ImageIO.read(new File("src\\com\\company\\pics\\space1new.jpg")))));
+    this.setFont(new Font("Consolas", Font.BOLD, 20));
+
+    this.setVisible(true);
+    this.addMouseListener(new TouchListener());
+}
+private void toFillVector(){
+    circles = new Vector<Circle>();
+
+    int num=100;
+    int distW = borderWidth/num;
+    int distH = borderHeight/num;
+
+    for (int i=0; i< num; i++)
+        for (int j=0; j< num; j++)
+            circles.addElement(new Circle(i*distW, j*distH, 2,2, speed, speed, new Color((50+i+j)%255, (28+i+j)%255, (17+i+j)%255)));
+}
+private void toMakeWave(MouseEvent e) throws InterruptedException {
+    for(Circle circle: circles){
+        circle.setX(circle.getX()+15);
+        circle.setY(circle.getY()+15);
+    }
+    repaint();
+
+    Thread.sleep(500);
+
+    for(Circle circle: circles){
+        circle.setX(circle.getX()-15);
+        circle.setY(circle.getY()-15);
+    }
+    repaint();
 };
+
+private void redraw (Graphics2D g){
+        if (null != circles){
+            synchronized (circles){
+                for (Circle circle : circles){
+                    g.setColor(circle.getColor());
+                    g.fillOval(circle.getX(),circle.getY(),circle.getWidth(),circle.getHeight());
+                }
+            }
+        }
+    }
+public void paint(Graphics g){
+        BufferedImage img = new BufferedImage(this.getWidth(),this.getHeight(),BufferedImage.TYPE_3BYTE_BGR);
+        Graphics2D gr = img.createGraphics();
+
+        redraw(gr);
+        g.drawImage(img, 0, 0, this);
+    }
+class TouchListener implements MouseListener{
+    @Override
+    public void mouseClicked(MouseEvent e) {
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        try {toMakeWave(e);} catch (InterruptedException e1) {e1.printStackTrace();}
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+
+    }
+}
+}
+
+
+
+
+/*
 private Runnable spiraleRunnable = new Runnable() {
     double phi =1, iter2 = 0, k1=0.07, r=300;
 
@@ -56,47 +137,8 @@ private Runnable spiraleRunnable = new Runnable() {
 
 
 
-MainFrame() throws InterruptedException, IOException {
-     settings();
 
-     circles = new Vector<Circle>();
-
-     for (int i=0; i< 70; i++)
-         for (int j=0; j< 70; j++)
-             circles.addElement(new Circle(i*11, j*11, 2,2, speed, speed, new Color((50+i+j)%255, (i+2*j)%255, (i+j)%255)));
-
-             thread = new Thread(runnable);
-             thread.start();
-    }
-private void redraw (Graphics2D g){
-    if (null != circles){
-    synchronized (circles){
-            for (Circle circle : circles){
-                g.setColor(circle.getColor());
-                g.fillOval(circle.getX(),circle.getY(),circle.getWidth(),circle.getHeight());
-            }
-           }
-          }
-        }
-public void paint(Graphics g){
-            BufferedImage img = new BufferedImage(this.getWidth(),this.getHeight(),BufferedImage.TYPE_3BYTE_BGR);
-            Graphics2D gr = img.createGraphics();
-
-            redraw(gr);
-            g.drawImage(img, 0, 0, this);
-        }
-private void settings() throws IOException {
-    this.setLayout(null);
-
-    this.setBounds(10 * Toolkit.getDefaultToolkit().getScreenSize().width / 100, 5 * Toolkit.getDefaultToolkit().getScreenSize().height / 100, 800, 800);
-    setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-    this.setContentPane(new JLabel(new ImageIcon(ImageIO.read(new File("src\\com\\company\\pics\\space1new.jpg")))));
-    this.setFont(new Font("Consolas", Font.BOLD, 20));
-
-    this.setVisible(true);
-    this.addMouseListener(new TouchListener());
-}
-private void toSetSpeed(Circle circle, MouseEvent e){
+    private void toSetSpeed(Circle circle, MouseEvent e){
 
     double H, W;
     double coefw, coefh;
@@ -181,42 +223,17 @@ private void toMoveBySpirale(MouseEvent e) throws InterruptedException {
     }
     //}
 }
-class TouchListener implements MouseListener{
-    @Override
-    public void mouseClicked(MouseEvent e) {
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-        isRun1 = false;
-        try {Thread.sleep((long)12);} catch (InterruptedException e1) {e1.printStackTrace();}
-        thread.interrupt();
 
 
-        spiraleThread = new Thread(spiraleRunnable);
-        spiraleThread.start();
-
-        // for (Circle circle : circles) toSetSpeed(circle, e);
-       //try {toMoveBySpirale(e);} catch (InterruptedException e1) {e1.printStackTrace();}
-
-      // isRun1 = !isRun1;
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-
-    }
-}
-}
 
 
+
+
+
+
+
+
+
+
+
+    */
